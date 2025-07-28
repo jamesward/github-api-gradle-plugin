@@ -1,18 +1,19 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
+@Suppress("UnstableApiUsage")
 plugins {
     `kotlin-dsl`
-    kotlin("plugin.power-assert") version embeddedKotlinVersion
-    kotlin("plugin.serialization") version embeddedKotlinVersion
 
-    `maven-publish`
-    signing
-    id("org.danilopianini.publish-on-central") version "9.0.8"
+    embeddedKotlin("jvm")
+    embeddedKotlin("plugin.power-assert")
+    embeddedKotlin("plugin.serialization")
+
+    id("com.vanniktech.maven.publish") version "0.34.0"
 }
 
 group = "com.jamesward"
-version = "0.0.1"
+version = "0.0.2"
 
 gradlePlugin {
     website = "https://github.com/jamesward/github-api-gradle-plugin"
@@ -33,14 +34,15 @@ kotlin {
 }
 
 dependencies {
-    implementation("io.ktor:ktor-client-core:3.2.2")
-    implementation("io.ktor:ktor-client-cio:3.2.2")
-    implementation("io.ktor:ktor-client-content-negotiation:3.2.2")
+    // align transitives to embedded kotlin version
+    implementation("io.ktor:ktor-client-core:3.0.3")
+    implementation("io.ktor:ktor-client-cio:3.0.3")
+    implementation("io.ktor:ktor-client-content-negotiation:3.0.3")
 
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3") // must be compatible with Gradle's Kotlin version
-    implementation("io.ktor:ktor-serialization-kotlinx-json:3.2.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:3.0.3")
 
-    testImplementation(kotlin("test"))
+    testImplementation(embeddedKotlin("test"))
 }
 
 tasks.withType<Test> {
@@ -53,41 +55,36 @@ tasks.withType<Test> {
     }
 }
 
-signing {
-    sign(publishing.publications)
-    useInMemoryPgpKeys(System.getenv("OSS_GPG_KEY"), System.getenv("OSS_GPG_PASS"))
-}
+mavenPublishing {
+    publishToMavenCentral()
 
-publishing {
-    publications {
-        withType<MavenPublication> {
-            pom {
-                name = "GitHub API Gradle Plugin"
-                description = "A plugin to use the GitHub v3 REST API from Gradle"
-                url = "https://github.com/jamesward/github-api-gradle-plugin"
+    signAllPublications()
 
-                scm {
-                    connection = "scm:git:https://github.com/jamesward/github-api-gradle-plugin.git"
-                    developerConnection = "scm:git:git@github.com:jamesward/sgithub-api-gradle-plugin.git"
-                    url = "https://github.com/jamesward/github-api-gradle-plugin"
-                }
-
-                licenses {
-                    license {
-                        name = "Apache 2.0"
-                        url = "https://opensource.org/licenses/Apache-2.0"
-                    }
-                }
-
-                developers {
-                    developer {
-                        id = "jamesward"
-                        name = "James Ward"
-                        email = "james@jamesward.com"
-                        url = "https://jamesward.com"
-                    }
-                }
+    pom {
+        name = "GitHub API Gradle Plugin"
+        description = "A plugin to use the GitHub v3 REST API from Gradle"
+        inceptionYear = "2025"
+        url = "https://github.com/jamesward/github-api-gradle-plugin"
+        licenses {
+            license {
+                name = "The Apache License, Version 2.0"
+                url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
+                distribution = "https://www.apache.org/licenses/LICENSE-2.0.txt"
             }
+        }
+        developers {
+            developer {
+                id = "jamesward"
+                name = "James Ward"
+                email = "james@jamesward.com"
+                url = "https://jamesward.com"
+            }
+        }
+        scm {
+            url = "https://github.com/jamesward/github-api-gradle-plugin"
+            connection = "https://github.com/jamesward/github-api-gradle-plugin.git"
+            developerConnection = "scm:git:git@github.com:jamesward/github-api-gradle-plugin.git"
         }
     }
 }
+
